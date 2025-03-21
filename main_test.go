@@ -63,7 +63,6 @@ func TestMalloc(t *testing.T) {
 		assert.Equal(t, 403, r.Code)
 		assert.Equal(t, uint64(0), resp.Address)
 	})
-
 	t.Run("InvalidParam", func(t *testing.T) {
 		var resp MallocResponse
 		r := mallocMemory("{}", &resp)
@@ -89,11 +88,32 @@ func TestFree(t *testing.T) {
 		return r
 	}
 
+	t.Run("MallocFree", func(t *testing.T) {
+		var respMalloc MallocResponse
+		{
+			reqBody := `{"size":1024}`
+			req, _ := http.NewRequest("POST", "/memory/malloc", bytes.NewBuffer([]byte(reqBody)))
+			r := httptest.NewRecorder()
+			router.ServeHTTP(r, req)
+
+			assert.Equal(t, 200, r.Code)
+			err := json.Unmarshal(r.Body.Bytes(), &respMalloc)
+			assert.NoError(t, err)
+			assert.NotEqual(t, 0, respMalloc.Address)
+		}
+
+		reqBody := fmt.Sprintf(`{"addr":%d}`, respMalloc.Address)
+		r := freeMemory(reqBody)
+		assert.Equal(t, 200, r.Code)
+		r = freeMemory(reqBody) // double free
+		assert.Equal(t, 400, r.Code)
+	})
 	t.Run("FreeZero", func(t *testing.T) {
 		r := freeMemory(`{"addr":0}`)
 		assert.Equal(t, 200, r.Code)
 	})
-	t.Run("FreeInvalidAddr", func(t *testing.T) {
+
+	t.Run("InvalidAddr", func(t *testing.T) {
 		r := freeMemory(`{"addr":123456}`)
 		assert.Equal(t, 400, r.Code)
 	})
@@ -115,9 +135,9 @@ func TestWriteRead(t *testing.T) {
 		router.ServeHTTP(r, req)
 		if pval != nil {
 			var resp MemReadResponse
-			if err := json.Unmarshal(r.Body.Bytes(), &resp); err == nil {
-				*pval = resp.Value
-			}
+			err := json.Unmarshal(r.Body.Bytes(), &resp)
+			assert.NoError(t, err)
+			*pval = resp.Value
 		}
 		return r
 	}
@@ -143,9 +163,9 @@ func TestWriteRead(t *testing.T) {
 		assert.Equal(t, 200, r.Code)
 		r = putMemory(url, `{"val":255}`)
 		assert.Equal(t, 200, r.Code)
-		r = putMemory(url, `{"val":-1}`)
+		r = putMemory(url, `{"val":-1}`) // out of range
 		assert.Equal(t, 400, r.Code)
-		r = putMemory(url, `{"val":256}`)
+		r = putMemory(url, `{"val":256}`) // out of range
 		assert.Equal(t, 400, r.Code)
 	})
 
@@ -174,7 +194,7 @@ func TestWriteRead(t *testing.T) {
 		r = getMemory(url, nil)
 		assert.Equal(t, HttpStatusUB, r.Code)
 	})
-	t.Run("InvalidAddress", func(t *testing.T) {
+	t.Run("InvalidAddr", func(t *testing.T) {
 		url := fmt.Sprintf("/memory/%d", respMalloc.Address-1)
 
 		r := putMemory(url, `{"val":128}`)
