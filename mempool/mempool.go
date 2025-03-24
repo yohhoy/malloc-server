@@ -13,12 +13,16 @@ var (
 	ErrOverrunAccess = errors.New("overrun access")
 )
 
-const safeIntBits = 53
-const blockLowBits = 28 // configurable
-const blockHighBits = safeIntBits - blockLowBits
+const (
+	safeIntBits   = 53
+	blockLowBits  = 28 // configurable
+	blockHighBits = safeIntBits - blockLowBits
+)
 
-const MemBlockSlot = (1 << blockHighBits) - 1 // # of blocks (id=0 is reserved for NULL)
-const MemBlockLimit = (1 << blockLowBits) - 1 // limit of blocks[bytes]
+const (
+	MemBlockSlot  = (1 << blockHighBits) - 1 // # of blocks (id=0 is reserved for NULL)
+	MemBlockLimit = (1 << blockLowBits) - 1  // limit of blocks[bytes]
+)
 
 type MemBlock []byte
 
@@ -84,10 +88,10 @@ func (p *MemPool) Access(addr uint64, pval *byte) (byte, error) {
 	id, offset := addr2id(addr)
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if _, exists := p.blocks[id]; !exists {
+	block, exists := p.blocks[id]
+	if !exists {
 		return 0, ErrInvalidAddr
 	}
-	block := p.blocks[id]
 	if offset >= len(*block) {
 		return 0, ErrOverrunAccess
 	}

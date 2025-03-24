@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/yohhoy/malloc-server/mempool"
 )
 
@@ -96,10 +97,10 @@ func TestFree(t *testing.T) {
 			r := httptest.NewRecorder()
 			router.ServeHTTP(r, req)
 
-			assert.Equal(t, 200, r.Code)
+			require.Equal(t, 200, r.Code)
 			err := json.Unmarshal(r.Body.Bytes(), &respMalloc)
-			assert.NoError(t, err)
-			assert.NotEqual(t, 0, respMalloc.Address)
+			require.NoError(t, err)
+			require.NotEqual(t, 0, respMalloc.Address)
 		}
 
 		reqBody := fmt.Sprintf(`{"addr":%d}`, respMalloc.Address)
@@ -150,10 +151,10 @@ func TestWriteRead(t *testing.T) {
 		r := httptest.NewRecorder()
 		router.ServeHTTP(r, req)
 
-		assert.Equal(t, 200, r.Code)
+		require.Equal(t, 200, r.Code)
 		err := json.Unmarshal(r.Body.Bytes(), &respMalloc)
-		assert.NoError(t, err)
-		assert.NotEqual(t, 0, respMalloc.Address)
+		require.NoError(t, err)
+		require.NotEqual(t, 0, respMalloc.Address)
 	}
 
 	t.Run("Write", func(t *testing.T) {
