@@ -1,4 +1,4 @@
-name: Go Test CI
+name: test
 
 on:
   push:
@@ -25,4 +25,3 @@ jobs:
 
     - name: Run tests
       run: go test -v ./...
-

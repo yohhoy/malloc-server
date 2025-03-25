@@ -1,4 +1,6 @@
 # malloc-server
+[![test CI](https://github.com/yohhoy/malloc-server/actions/workflows/test.yml/badge.svg)](https://github.com/yohhoy/malloc-server/actions/workflows/test.yml)
+[![MIT License](http://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 malloc REST Server.
 
